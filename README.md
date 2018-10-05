@@ -23,6 +23,8 @@ Then go to `Plugins/PavilionPlugin` and run `./BuildThirdParty.sh`.
 
 Finally open `Pavilion.uproject` with the Unreal Editor.
 
+Please note that to enable real-time optical flow output, you need to have a version of UE4 patched with [my patch](https://github.com/ProfFan/UnrealOpticalFlowDemo).
+
 # Supported Versions
 
 Unreal Engine version > 4.18
