@@ -1,6 +1,6 @@
 [submodule "Plugins/PavilionPlugin/ThirdParty/Source/sdformat"]
 	path = Plugins/PavilionPlugin/ThirdParty/Source/sdformat
-	url = git@github.com:ProfFan/sdformat.git
+	url = https://github.com/ProfFan/sdformat.git
 	branch = nortti
 [submodule "Plugins/PavilionPlugin/ThirdParty/Source/assimp"]
 	path = Plugins/PavilionPlugin/ThirdParty/Source/assimp
@@ -16,5 +16,5 @@
 	branch = master
 [submodule "Plugins/RuntimeMeshComponent"]
 	path = Plugins/RuntimeMeshComponent
-	url = git@github.com:ProfFan/RuntimeMeshComponent.git
+	url = https://github.com/ProfFan/RuntimeMeshComponent.git
 	branch = metal-bugfix
