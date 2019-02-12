@@ -5,6 +5,21 @@ if ! [[ -e "./ThirdParty/Release" ]]; then
     exit 1
 fi
 
+abort()
+{
+    echo >&2 '
+***************
+*** ERROR ***
+***************
+'
+    echo "Exiting..." >&2
+    exit 1
+}
+
+trap 'abort' ERR
+
+set -e
+
 TOPDIR=`pwd`
 TP_DIR=$TOPDIR/ThirdParty
 TP_REL_DIR=$TOPDIR/ThirdParty/Release
@@ -16,6 +31,9 @@ echo "Updating dependencies"
 git submodule update --init
 
 echo "Building dependencies"
+
+mkdir -p "$TP_DIR/Build"
+mkdir -p "$TP_DIR/Release"
 
 #-------------
 # Cap'n Proto
@@ -58,12 +76,21 @@ echo "Building dependencies"
 #-------------
 
 (
+    cd "$TP_DIR/Source"
+    if [! -d "ignition-math" ]; then
+        curl https://bitbucket.org/ignitionrobotics/ign-math/get/ignition-math4_4.0.0.tar.bz2 -o ignition-math4_4.0.0.tar.bz2
+        tar -xjf ignition-math4_4.0.0.tar.bz2
+        mv ignitionrobotics-ign-math-054f8a99081f ignition-math
+    fi
+
     cd "$TP_DIR/Build"
     mkdir -p ignition-math
     cd ignition-math
     cmake $TP_DIR/Source/ignition-math -DCMAKE_C_FLAGS="-fno-rtti" -DCMAKE_CXX_FLAGS="-O3 -fno-rtti" -DCMAKE_INSTALL_PREFIX="$TP_REL_DIR/ignition-math" -DCMAKE_BUILD_TYPE=Release
     make -j install
-    install_name_tool -add_rpath "@loader_path/../../ThirdParty/Release/ignition-math/lib" "$TP_REL_DIR/ignition-math/lib/libignition-math4.4.dylib"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        install_name_tool -add_rpath "@loader_path/../../ThirdParty/Release/ignition-math/lib" "$TP_REL_DIR/ignition-math/lib/libignition-math4.4.dylib"
+    fi
 )
 
 #-------------
@@ -76,44 +103,63 @@ echo "Building dependencies"
     cd sdformat
     cmake $TP_DIR/Source/sdformat -DCMAKE_C_FLAGS_ALL="-fno-rtti -fno-exceptions" -DCMAKE_CXX_FLAGS="-O3 -fno-rtti -fno-exceptions" -DCMAKE_INSTALL_PREFIX="$TP_REL_DIR/sdformat" -DCMAKE_BUILD_TYPE=Release
     make -j install
-    install_name_tool -add_rpath "$TP_REL_DIR/ignition-math/lib" "$TP_REL_DIR/sdformat/lib/libsdformat.dylib"
-    install_name_tool -id "@rpath/libsdformat.6.dylib" "$TP_REL_DIR/sdformat/lib/libsdformat.dylib"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        install_name_tool -add_rpath "$TP_REL_DIR/ignition-math/lib" "$TP_REL_DIR/sdformat/lib/libsdformat.dylib"
+        install_name_tool -id "@rpath/libsdformat.6.dylib" "$TP_REL_DIR/sdformat/lib/libsdformat.dylib"
+    fi
 )
 
 #----------------------
 # Finalize UBT Modules
 #----------------------
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    DEPTH_ARG="-depth"
+else
+    DEPTH_ARG="-maxdepth"
+fi
+
 (
     cd $TP_REL_DIR/capnproto/include
-    for i in $(find . -depth 1); do
+    mkdir -p $UE_TP_DIR/capnproto/Public
+    for i in $(find . $DEPTH_ARG 1); do
         cp -Rf $i/. $UE_TP_DIR/capnproto/Public/$i
     done
 )
 
 (
     cd $TP_REL_DIR/cros/include
-    for i in $(find . -depth 1); do
+    mkdir -p $UE_TP_DIR/cros/Public
+    for i in $(find . $DEPTH_ARG 1); do
         cp -Rf $i/. $UE_TP_DIR/cros/Public/$i
     done
 )
 
 (
     cd $TP_REL_DIR/assimp/include
-    for i in $(find . -depth 1); do
+    mkdir -p $UE_TP_DIR/assimp/Public
+    for i in $(find . $DEPTH_ARG 1); do
         cp -Rf $i/. $UE_TP_DIR/assimp/Public/$i
     done
 )
 
 (
     cd $TP_REL_DIR/sdformat/include/sdformat-6.0
-    for i in $(find . -depth 1); do
+    mkdir -p $UE_TP_DIR/sdformat/Public
+    for i in $(find . $DEPTH_ARG 1); do
         cp -Rf $i/. $UE_TP_DIR/sdformat/Public/$i
     done
 )
 
 (
-    cd /usr/local/opt/boost/include/boost
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        BOOST_DIR="/usr/local/opt/boost/include/boost"
+    else
+        BOOST_DIR="/usr/include/boost"
+    fi
+    
+    cd $BOOST_DIR
+
     mkdir -p $UE_TP_DIR/sdformat/Public/boost/type_traits
     cp -Rf ./type_traits/. $UE_TP_DIR/sdformat/Public/boost/type_traits
     cp -f ./any.hpp $UE_TP_DIR/sdformat/Public/boost/
@@ -151,7 +197,8 @@ echo "Building dependencies"
 
 (
     cd $TP_REL_DIR/ignition-math/include/ignition/math4
-    for i in $(find . -depth 1); do
+    mkdir -p $UE_TP_DIR/ignition/Public
+    for i in $(find . $DEPTH_ARG 1); do
         cp -Rf $i/. $UE_TP_DIR/ignition/Public/$i
     done
 )
