@@ -191,8 +191,9 @@ fi
     cp -Rf ./type_index/. $UE_TP_DIR/sdformat/Public/boost/type_index
     cp -Rf ./math/. $UE_TP_DIR/sdformat/Public/boost/math
     cp -f ./type_index.hpp $UE_TP_DIR/sdformat/Public/boost/
-    # mkdir -p $UE_TP_DIR/sdformat/Public/boost/config
-    # cp -Rf ./config/. $UE_TP_DIR/sdformat/Public/boost/config
+    cp -Rf ./container_hash/. $UE_TP_DIR/sdformat/Public/boost/container_hash
+    mkdir -p $UE_TP_DIR/sdformat/Public/boost/config
+    cp -Rf ./config/. $UE_TP_DIR/sdformat/Public/boost/config
 )
 
 (
